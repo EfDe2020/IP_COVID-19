@@ -5,11 +5,11 @@ global sigma gamma b alpha1 alpha2 Mort_Rate pC pN pR wC wR NC scenario scenario
 %% Initialization
 % Model parameters
 sigma = 1/7; % incubation rate [1/12 1/2]
-gamma = [0.0721 0.238]; % probability of recovery or death (for China)
-b = [0.05068 0.05429]; % probability of trasmsmission during a contact (for China)
+gamma = [0.0721 0.238]; % rate of recovery or death (for China)
+b = [0.05068 0.05429]; % rate of trasmsmission during a contact (for China)
 alpha1 = 5; alpha2 = alpha1; % ration between measured/unmeasured and/or between I and E, it is in [5 20]
 Mort_Rate = 0.034; % mortality rate is 3.4 (for China)
-delay = 10;
+delay = 10; % nominal value
 
 % Confinement parameters
 pC = 2; % number of contacts in quarantin (3 for China)
@@ -29,22 +29,22 @@ else
 end
 
 % Identification and prediciton
-delta = .1; % the level of uncertainty
+delta = .1; % the level of uncertainty for IP
 JDI = 5; JAI = 12; % days used for identification of alpha
 scenario_p = 1; % the algorithm for identification
 if (scenario_p == 1)
-    K = 6; % length of window to estimate the values of parameters
+    K = 6; % length of moving window to estimate the values of parameters
 else
-    K = 10; % length of window to estimate the values of parameters
+    K = 10; % minimal length of window to estimate the values of parameters
 end
 J_id = 0; % the number of days used for the model verification
 
 % Misc
 Pos = [200 200 900 600];
 Posl = [200 200 1500 600];
-Type = 1; % Type of the plot
-Imperial = 0; % 1 = Use of Imperial College parameters; 2 = Use of Cmmdi parameters
-China = 0;
+Type = 1; % type of the plot
+Imperial = 0; % 1 = use of Imperial College parameters; 2 = use of Cmmdi parameters
+China = 0; % validate chinese parameters or not
 
 %% France
 Country = 'France';

@@ -195,7 +195,7 @@ ax = gca; set(ax,'xTick',ticks,'XGrid','on');
 
 figure('Name',['Interval predictor of infectives for deviation of all parameters for ' Country],'Position',Pos);
 if (Type == 1)
-    semilogy(t,Im,'b:',t,IM,'b--',t(1:J-J_id),I0(1:J-J_id),'bo',t(J-J_id+1:J),I0(J-J_id+1:J),'bs',t,N*ones(M,1),'k:'); xlim([t(1) t(M)]); title('I');
+    semilogy(t,Im,'b:',t,IM,'b--',t(1:J-J_id),I0(1:J-J_id),'bo',t(J-J_id+1:J),I0(J-J_id+1:J),'bs',t,N*ones(M,1),'k:'); xlim([t(1) t(M)]); title('I'); ylim([min(Im) max(IM)]);
 else
     plot(t(1:J-J_id),I0(1:J-J_id),'bo',t(J-J_id+1:J),I0(J-J_id+1:J),'bs'); xlim([t(1) t(M)]); title('I'); %,t,N*ones(M,1),'k:'
 end
