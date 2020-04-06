@@ -9,3 +9,5 @@ The description of other parameters can be found in the file.
 
 The function *"script1.m"* contains all identification and validation procedures.
 See the comments in the file.
+
+The function *"delay_ind.m"* is used to calculate the delayed values of the input in the model and predictor.
