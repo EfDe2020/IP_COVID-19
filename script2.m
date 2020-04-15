@@ -1,4 +1,4 @@
-function script1(deltap,deltam,China)
+function script2(deltap,deltam,China)
 
 global sigma gamma b alpha1 alpha2 Mort_Rate pC pN pR wC wR NC scenario scenario_p JDI JAI K Pos Posl N J T1 T0 Country I0 D0 H0 delay Type J_id Z_tau eta;
 
@@ -35,8 +35,8 @@ if (China == 1)
     S = ones(M,1); S(1) = N-R(1)-I(1)-E(1);
 
     for i = 1:M-1
-        S(i+1) = S(i)-b_*(pC*I(i)+r(delay_ind(i-delay))*E(i))*S(i)/N/(1+eta*R(i));
-        E(i+1) = (1-sigma)*E(i)+b_*(pC*I(i)+r(delay_ind(i-delay))*E(i))*S(i)/N/(1+eta*R(i));
+        S(i+1) = S(i)-b_*(pC*I(i)+r(delay_ind(i-delay))*E(i))*S(i)/N/(1+eta*I(i));
+        E(i+1) = (1-sigma)*E(i)+b_*(pC*I(i)+r(delay_ind(i-delay))*E(i))*S(i)/N/(1+eta*I(i));
         I(i+1) = (1-gamma_)*I(i)+sigma*E(i);
         R(i+1) = R(i)+gamma_*I(i);
     end
@@ -102,8 +102,8 @@ if (scenario_p == 1)
     for k = 0:J-J_id-1-K
         den = 0; num = 0;
         for i = 2:K
-            den = den+(S0(k+i-1)*(pC*I0(k+i-1)+r(delay_ind(k+i-1-tau))*E0(k+i-1)))^2;
-            num = num+(E0(k+i)-(1-sigma)*E0(k+i-1))*S0(k+i-1)*(pC*I0(k+i-1)+r(delay_ind(k+i-1-tau))*E0(k+i-1));
+            den = den+(S0(k+i-1)*(pC*I0(k+i-1)+r(delay_ind(k+i-1-tau))*E0(k+i-1))/(1+eta*I0(k+i-1)))^2;
+            num = num+(E0(k+i)-(1-sigma)*E0(k+i-1))*S0(k+i-1)*(pC*I0(k+i-1)+r(delay_ind(k+i-1-tau))*E0(k+i-1))/(1+eta*I0(k+i-1));
         end
         B(k+1) = N*num/den;
     end
@@ -123,8 +123,8 @@ else
     for k = Ki:-1:0
         den = 0; num = 0;
         for i = 2:J-J_id-k-1
-            den = den+(S0(i-1)*(pC*I0(i-1)+r(delay_ind(i-1-tau))*E0(i-1)))^2;
-            num = num+(E0(i)-(1-sigma)*E0(i-1))*S0(i-1)*(pC*I0(i-1)+r(delay_ind(i-1-tau))*E0(i-1));
+            den = den+(S0(i-1)*(pC*I0(i-1)+r(delay_ind(i-1-tau))*E0(i-1))/(1+eta*I0(i-1)))^2;
+            num = num+(E0(i)-(1-sigma)*E0(i-1))*S0(i-1)*(pC*I0(i-1)+r(delay_ind(i-1-tau))*E0(i-1))/(1+eta*I0(i-1));
         end
         B(Ki-k+1) = N*num/den;
     end
@@ -140,8 +140,8 @@ subplot(2,2,4); plot(t(2:J-J_id),log(E0),'b',t(2:J-J_id),ab1(1)*(1:J-J_id-1)+ab1
 R(1) = R0(1); I(1) = I0(1); E(1) = E0(1); S(1) = S0(1);
 
 for i = 1:M-1
-    S(i+1) = S(i)-b_i*(pC*I(i)+r(delay_ind(i-tau))*E(i))*S(i)/N;
-    E(i+1) = (1-sigma)*E(i)+b_i*(pC*I(i)+r(delay_ind(i-tau))*E(i))*S(i)/N;
+    S(i+1) = S(i)-b_i*(pC*I(i)+r(delay_ind(i-tau))*E(i))*S(i)/N/(1+eta*I(i));
+    E(i+1) = (1-sigma)*E(i)+b_i*(pC*I(i)+r(delay_ind(i-tau))*E(i))*S(i)/N/(1+eta*I(i));
     I(i+1) = (1-gamma_i)*I(i)+sigma*E(i);
     R(i+1) = R(i)+gamma_i*I(i);
 end
@@ -170,12 +170,12 @@ Em(1) = delta_(1)*E(1); EM(1) = delta_(2)*E(1);
 Sm(1) = delta_(1)*S(1); SM(1) = delta_(2)*S(1);
 
 for i = 1:M-1
-    Sm(i+1) = (1-b_(2)*(pC*IM(i)+r_(delay_ind(i-tau),2)*EM(i))/N)*Sm(i);
-    Em(i+1) = (1-sigma_(2)+b_(1)*r_(delay_ind(i-tau),1)*Sm(i)/N)*Em(i)+b_(1)*pC*Im(i)*Sm(i)/N;
+    Sm(i+1) = (1-b_(2)*(pC*IM(i)+r_(delay_ind(i-tau),2)*EM(i))/N/(1+eta*Im(i)))*Sm(i);
+    Em(i+1) = (1-sigma_(2)+b_(1)*r_(delay_ind(i-tau),1)*Sm(i)/N/(1+eta*IM(i)))*Em(i)+b_(1)*pC*Im(i)*Sm(i)/N/(1+eta*IM(i));
     Im(i+1) = (1-gamma_(2))*Im(i)+sigma_(1)*Em(i);
     Rm(i+1) = Rm(i)+gamma_(1)*Im(i);
-    SM(i+1) = min(N,(1-b_(1)*(pC*Im(i)+r_(delay_ind(i-tau),1)*Em(i))/N)*SM(i));
-    EM(i+1) = min(N,(1-sigma_(1)+b_(2)*r_(delay_ind(i-tau),2)*SM(i)/N)*EM(i)+b_(2)*pC*IM(i)*SM(i)/N);
+    SM(i+1) = min(N,(1-b_(1)*(pC*Im(i)+r_(delay_ind(i-tau),1)*Em(i))/N/(1+eta*IM(i)))*SM(i));
+    EM(i+1) = min(N,(1-sigma_(1)+b_(2)*r_(delay_ind(i-tau),2)*SM(i)/N/(1+eta*Im(i)))*EM(i)+b_(2)*pC*IM(i)*SM(i)/N/(1+eta*Im(i)));
     IM(i+1) = min(N,(1-gamma_(1))*IM(i)+sigma_(2)*EM(i));
     RM(i+1) = min(N,RM(i)+gamma_(2)*IM(i));
 end
@@ -207,16 +207,16 @@ R_ = zeros(M,1); E_ = zeros(M,1); I_ = zeros(M,1); S_ = zeros(M,1);
 E_(J-J_id-1) = E0(J-J_id-1); R_(J-J_id-1) = R0(J-J_id-1); I_(J-J_id-1) = I0(J-J_id-1); S_(J-J_id-1) = S0(J-J_id-1);
 
 for i = J-J_id-1:M-1
-    S_(i+1) = S_(i)-b_i*(pC*I_(i)+r(delay_ind(i-tau))*E_(i))*S_(i)/N;
-    E_(i+1) = (1-sigma)*E_(i)+b_i*(pC*I_(i)+r(delay_ind(i-tau))*E_(i))*S_(i)/N;
+    S_(i+1) = S_(i)-b_i*(pC*I_(i)+r(delay_ind(i-tau))*E_(i))*S_(i)/N/(1+eta*I(i));
+    E_(i+1) = (1-sigma)*E_(i)+b_i*(pC*I_(i)+r(delay_ind(i-tau))*E_(i))*S_(i)/N/(1+eta*I(i));
     I_(i+1) = (1-gamma_i)*I_(i)+sigma*E_(i);
     R_(i+1) = R_(i)+gamma_i*I_(i);
-    Sm(i+1) = (1-b_(2)*(pC*IM(i)+r_(delay_ind(i-tau),2)*EM(i))/N)*Sm(i);
-    Em(i+1) = (1-sigma_(2)+b_(1)*r_(delay_ind(i-tau),1)*Sm(i)/N)*Em(i)+b_(1)*pC*Im(i)*Sm(i)/N;
+    Sm(i+1) = (1-b_(2)*(pC*IM(i)+r_(delay_ind(i-tau),2)*EM(i))/N/(1+eta*Im(i)))*Sm(i);
+    Em(i+1) = (1-sigma_(2)+b_(1)*r_(delay_ind(i-tau),1)*Sm(i)/N/(1+eta*IM(i)))*Em(i)+b_(1)*pC*Im(i)*Sm(i)/N/(1+eta*IM(i));
     Im(i+1) = (1-gamma_(2))*Im(i)+sigma_(1)*Em(i);
     Rm(i+1) = Rm(i)+gamma_(1)*Im(i);
-    SM(i+1) = min(N,(1-b_(1)*(pC*Im(i)+r_(delay_ind(i-tau),1)*Em(i))/N)*SM(i));
-    EM(i+1) = min(N,(1-sigma_(1)+b_(2)*r_(delay_ind(i-tau),2)*SM(i)/N)*EM(i)+b_(2)*pC*IM(i)*SM(i)/N);
+    SM(i+1) = min(N,(1-b_(1)*(pC*Im(i)+r_(delay_ind(i-tau),1)*Em(i))/N/(1+eta*IM(i)))*SM(i));
+    EM(i+1) = min(N,(1-sigma_(1)+b_(2)*r_(delay_ind(i-tau),2)*SM(i)/N/(1+eta*Im(i)))*EM(i)+b_(2)*pC*IM(i)*SM(i)/N/(1+eta*Im(i)));
     IM(i+1) = min(N,(1-gamma_(1))*IM(i)+sigma_(2)*EM(i));
     RM(i+1) = min(N,RM(i)+gamma_(2)*IM(i));
 end
@@ -260,12 +260,12 @@ Em(1) = delta_(1)*E(1); EM(1) = delta_(2)*E(1);
 Sm(1) = delta_(1)*S(1); SM(1) = delta_(2)*S(1);
 
 for i = 1:M-1
-    Sm(i+1) = (1-b_(2)*(pC*IM(i)+r_(delay_ind(i-tau),2)*EM(i))/N)*Sm(i);
-    Em(i+1) = (1-sigma_(2)+b_(1)*r_(delay_ind(i-tau),1)*Sm(i)/N)*Em(i)+b_(1)*pC*Im(i)*Sm(i)/N;
+    Sm(i+1) = (1-b_(2)*(pC*IM(i)+r_(delay_ind(i-tau),2)*EM(i))/N/(1+eta*Im(i)))*Sm(i);
+    Em(i+1) = (1-sigma_(2)+b_(1)*r_(delay_ind(i-tau),1)*Sm(i)/N/(1+eta*IM(i)))*Em(i)+b_(1)*pC*Im(i)*Sm(i)/N/(1+eta*IM(i));
     Im(i+1) = (1-gamma_(2))*Im(i)+sigma_(1)*Em(i);
     Rm(i+1) = Rm(i)+gamma_(1)*Im(i);
-    SM(i+1) = min(N,(1-b_(1)*(pC*Im(i)+r_(delay_ind(i-tau),1)*Em(i))/N)*SM(i));
-    EM(i+1) = min(N,(1-sigma_(1)+b_(2)*r_(delay_ind(i-tau),2)*SM(i)/N)*EM(i)+b_(2)*pC*IM(i)*SM(i)/N);
+    SM(i+1) = min(N,(1-b_(1)*(pC*Im(i)+r_(delay_ind(i-tau),1)*Em(i))/N/(1+eta*IM(i)))*SM(i));
+    EM(i+1) = min(N,(1-sigma_(1)+b_(2)*r_(delay_ind(i-tau),2)*SM(i)/N/(1+eta*Im(i)))*EM(i)+b_(2)*pC*IM(i)*SM(i)/N/(1+eta*Im(i)));
     IM(i+1) = min(N,(1-gamma_(1))*IM(i)+sigma_(2)*EM(i));
     RM(i+1) = min(N,RM(i)+gamma_(2)*IM(i));
 end
