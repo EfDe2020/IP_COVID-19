@@ -1,6 +1,6 @@
-function script1(deltap,deltam)
+function script1(deltap,deltam,delta_IC)
 
-global sigma alpha1 alpha2 Mort_Rate pQ pC pN pR wC wR NC scenario scenario_p JDI JAI K Pos Posl N J T1 T0 Country I0 D0 H0 delay delay_pc Type J_id Z_tau JZ1 JZ2;
+global sigma alpha1 alpha2 Mort_Rate pQ pQR pC pN pR wC wR NC scenario_p JDI JAI K Pos Posl N J T1 T0 Country I0 D0 H0 delay delay_pc Type J_id Z_tau JZ1 JZ2;
 
 %% Estimation of alpha
 Ka = J-JAI-JDI; A = zeros(Ka,1);
@@ -15,26 +15,27 @@ I0 = alpha1*(I0-D0-H0); R0 = D0+alpha2*H0; % measured recovered
 %% Schedule of quarantine
 M = T1+7*(wC+wR)*NC; % number of days to simulate
 t = T0 + caldays(0:T1+7*(wC+wR)*NC-1);
-p = pQ*ones(M,1);
-p(T1+delay+delay_pc+1:T1+wC*7) = pC;
+p = pQR*ones(M,1);
+p(1:T1+delay+delay_pc) = pQ;
+p(T1+delay+delay_pc+1:T1+wC*7+delay) = pC;
 for i = 2:NC
-    p(T1+(i-1)*(wC+wR)*7+delay+delay_pc+1:T1+i*wC*7+(i-1)*wR*7) = pC;
+    p(T1+(i-1)*(wC+wR)*7+delay+delay_pc+1:T1+i*wC*7+(i-1)*wR*7+delay) = pC;
 end
 r = p; r(1:T1+delay) = pN;
 if (NC > 1)
-    r(T1+wC*7+1:T1+(wC+wR)*7+delay) = pR;
+    r(T1+wC*7+delay+1:T1+(wC+wR)*7+delay) = pR;
     ticks = [t(T1+1) t(T1+wC*7) t(T1+(wC+wR)*7)];
 else
     ticks = [];
 end
 for i = 2:NC-1
-    r(T1+(i-1)*(wC+wR)*7+wC*7+1:T1+i*(wC+wR)*7+delay) = pR;
+    r(T1+(i-1)*(wC+wR)*7+wC*7+delay+1:T1+i*(wC+wR)*7+delay) = pR;
     ticks = [ticks t(T1+(i-1)*(wC+wR)*7+wC*7) t(T1+i*(wC+wR)*7)];
 end
 r(T1+(NC-1)*(wC+wR)*7+wC*7+1:T1+NC*(wC+wR)*7) = pR;
 ticks = [ticks t(T1+(NC-1)*(wC+wR)*7+wC*7) t(T1+NC*(wC+wR)*7)];
 figure('Name',['Number of contacts for ' Country],'Position',Pos);
-plot(t,r,'b',t,p,'r--'); ylim([pC-1 pN+1]);
+plot(t,r,'b',t,p,'r--'); ylim([pC-1 pN+1]); legend('r','p','Location','southeast');
 ax = gca; set(ax,'xTick',ticks,'XGrid','on');
 
 %% Estimation of parameters
@@ -50,7 +51,7 @@ for i = 2:J-J_id
 end
 
 % Delay
-dI0 = log(I0(2:J-J_id))-log(I0(1:J-J_id-1));
+dI0 = real(log(I0(2:J-J_id))-log(I0(1:J-J_id-1)));
 if (J-J_id-2-T1 > 0)
     % Method 1
     E_tau = zeros(J-J_id-2-T1,1);
@@ -88,10 +89,14 @@ if (scenario_p == 1)
         end
         G(k+1) = num/den;
     end
-    gamma_i = mean(G)
+    gamma_i = mean(G(G>0))
     for k = 0:J-J_id-1-K
         den = 0; num = 0;
         for i = 2:K
+            if p(k+i-1) <= 0.2 || r(k+i-1) <= 0.2
+                num = 0;
+                break
+            end
             den = den+(S0(k+i-1)*(p(k+i-1)*I0(k+i-1)+r(k+i-1)*E0(k+i-1)))^2;
             num = num+(E0(k+i)-(1-sigma)*E0(k+i-1))*S0(k+i-1)*(p(k+i-1)*I0(k+i-1)+r(k+i-1)*E0(k+i-1));
         end
@@ -109,7 +114,7 @@ else
         end
         G(Ki-k+1) = num/den;
     end
-    gamma_i = mean(G)
+    gamma_i = mean(G(G>0))
     for k = Ki:-1:0
         den = 0; num = 0;
         for i = 2:J-J_id-k-1
@@ -139,7 +144,7 @@ for i = 1:M-1
     R(i+1) = R(i)+gamma_i*I(i);
 end
 
-figure('Name',['Simulation with identified data for scenario ' num2str(scenario) ' in ' Country],'Position',Pos);
+figure('Name',['Simulation with identified data in ' Country],'Position',Pos);
 semilogy(t,E,'r',t,I,'b',t,R,'g',t,N*ones(M,1),'k:'); xlim([t(1) t(M)]); legend('E','I','R','Location','southeast');
 ax = gca; set(ax,'xTick',ticks,'XGrid','on');
 
@@ -185,13 +190,14 @@ ax = gca; set(ax,'xTick',ticks,'XGrid','on');
 
 figure('Name',['Interval predictor of infectives for deviation of all parameters for ' Country],'Position',Pos);
 if (Type == 1)
-    semilogy(t,Im,'b:',t,IM,'b--',t(1:J-J_id),I0(1:J-J_id),'bo',t(J-J_id+1:J),I0(J-J_id+1:J),'bs',t,N*ones(M,1),'k:'); xlim([t(1) t(M)]); title('I'); ylim([min(Im) max(IM)]);
+    semilogy(t,Im,'b:',t,IM,'b--',t(1:J-J_id),I0(1:J-J_id),'bo',t(J-J_id+1:J),I0(J-J_id+1:J),'bs',t,N*ones(M,1),'k:'); xlim([t(1) t(M)]); title('I');
 else
     plot(t(1:J-J_id),I0(1:J-J_id),'bo',t(J-J_id+1:J),I0(J-J_id+1:J),'bs'); xlim([t(1) t(M)]); title('I'); %,t,N*ones(M,1),'k:'
 end
 ax = gca; set(ax,'xTick',ticks,'XGrid','on'); hold on
 
 % initial conditions from the last date used for identification
+delta_ = [1-delta_IC*deltam 1+delta_IC*deltap];
 Rm(J-J_id-1) = delta_(1)*R0(J-J_id-1); RM(J-J_id-1) = delta_(2)*R0(J-J_id-1);
 Im(J-J_id-1) = delta_(1)*I0(J-J_id-1); IM(J-J_id-1) = delta_(2)*I0(J-J_id-1);
 Em(J-J_id-1) = delta_(1)*E0(J-J_id-1); EM(J-J_id-1) = delta_(2)*E0(J-J_id-1);
@@ -215,7 +221,7 @@ for i = J-J_id-1:M-1
 end
 
 if (Type == 1)
-    semilogy(t(J-J_id-1:M),I_(J-J_id-1:M),'r',t(J-J_id-1:M),Im(J-J_id-1:M),'b:',t(J-J_id-1:M),IM(J-J_id-1:M),'b--','LineWidth',2);
+    semilogy(t(J-J_id-1:M),I_(J-J_id-1:M),'r',t(J-J_id-1:M),Im(J-J_id-1:M),'b:',t(J-J_id-1:M),IM(J-J_id-1:M),'b--','LineWidth',2); ylim([max(1,min(Im)) max(IM)]);
 else
     plot(t(J-J_id-1:M),I_(J-J_id-1:M),'r',t(J-J_id-1:M),Im(J-J_id-1:M),'b:','LineWidth',2); %,t(J-J_id-1:M),IM(J-J_id-1:M),'b--'
 end
@@ -247,6 +253,7 @@ gamma_ = gamma_i*[1 1]; b_ = b_i*[1 1]; r_ = r.*[1 1]; p_ = p.*[1 1]; sigma_ = [
 Rm = zeros(M,1); RM = zeros(M,1); Im = zeros(M,1); IM = zeros(M,1);
 Em = zeros(M,1); EM = zeros(M,1); Sm = zeros(M,1); SM = zeros(M,1);
 % inirial conditions
+delta_ = [1-deltam 1+deltap];
 Rm(1) = delta_(1)*R(1); RM(1) = delta_(2)*R(1);
 Im(1) = delta_(1)*I(1); IM(1) = delta_(2)*I(1);
 Em(1) = delta_(1)*E(1); EM(1) = delta_(2)*E(1);
